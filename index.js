@@ -1,8 +1,21 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path'); //폴더와 파일의 경로를 쉽게 조작하도록 제공
+const aws = require('aws-sdk'); //aws 설정을 위한 모듈
+const multerS3 = require('multer-s3'); //aws s3에 업로드하기 위한 multer설정
 const app = express();
 const PORT = 8000;
+
+//aws
+aws.config.update({
+    accessKeyId:"AKIAQ3PUG72IMDJ6VP77",
+    secretAccessKey: "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",
+    region: "ap-southeast-2"
+})
+//aws s3 인스턴스 생성
+const s3 = new aws.S3(
+
+);
 
 //view engine
 app.set('view engine', 'ejs');
@@ -24,26 +37,43 @@ console.log(__dirname);
 
 //multer 설정
 //diskStorage: 파일 저장 관련 설정 객체
-const storage = multer.diskStorage({
-    //destination: 저장될 경로를 지정(요청객체, 업로드된 파일객체, 콜백함수)
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    //filename: 파일이름 결정(요청객체, 업로드된 파일객체, 콜백함수)
-    filename: (req, file, cb) => {
-        //extname: 확장자를 추출
-        const ext = path.extname(file.originalname);
-        //basename: 파일이름 추출(파일이름, 확장자) => 확장자를 제외해서 파일이름이 추출
-        const newName = path.basename(file.originalname, ext) + Date.now() + ext;
-        cb(null, newName);
-    },
-});
+// const storage = multer.diskStorage({
+//     //destination: 저장될 경로를 지정(요청객체, 업로드된 파일객체, 콜백함수)
+//     destination: (req, file, cb) => {
+//         cb(null, 'uploads/');
+//     },
+//     //filename: 파일이름 결정(요청객체, 업로드된 파일객체, 콜백함수)
+//     filename: (req, file, cb) => {
+//         //extname: 확장자를 추출
+//         const ext = path.extname(file.originalname);
+//         //basename: 파일이름 추출(파일이름, 확장자) => 확장자를 제외해서 파일이름이 추출
+//         const newName = path.basename(file.originalname, ext) + Date.now() + ext;
+//         cb(null, newName);
+//     },
+// });
+
+//multer설정 - aws
+const upload = multer({
+    storage: multerS3({
+        s3 : s3,
+        bucket : 'kdt9s3test',
+        acl : 'public-read', // 파일접근권한 (public-read로 해야 업로드된 파일이 공개)
+        //파일의 메타 데이타 설정
+        metadata : function(req,file,cb){
+            cb(null,{fieldName: file.filename})
+        },
+        key : function(req,file,cb) {
+            cb(null,Date.now().toString()+ '-'+file.originalname);
+        },
+    })
+})
+
 //파일 크기 제한
 const limits = {
     fileSize: 5 * 1024 * 1024, //5mb
 };
 //key-value에서 key값과 value의 변수가 동일 하면 합칠 수 있음
-const upload = multer({ storage, limits });
+// const upload = multer({ storage, limits });
 
 //싱글: single()
 app.post('/upload', upload.single('userfile'), (req, res) => {
