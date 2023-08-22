@@ -13,9 +13,7 @@ aws.config.update({
     region: "ap-southeast-2"
 })
 //aws s3 인스턴스 생성
-const s3 = new aws.S3(
-
-);
+const s3 = new aws.S3();
 
 //view engine
 app.set('view engine', 'ejs');
@@ -59,11 +57,11 @@ const upload = multer({
         bucket : 'kdt9s3test',
         acl : 'public-read', // 파일접근권한 (public-read로 해야 업로드된 파일이 공개)
         //파일의 메타 데이타 설정
-        metadata : function(req,file,cb){
-            cb(null,{fieldName: file.filename})
-        },
+        // metadata : function(req,file,cb){
+        //     cb(null,{fieldName: file.filename});
+        // },
         key : function(req,file,cb) {
-            cb(null,Date.now().toString()+ '-'+file.originalname);
+            cb(null,Date.now().toString()+'-'+file.originalname);
         },
     })
 })
