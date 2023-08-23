@@ -58,7 +58,7 @@ const upload = multer({
         acl : 'public-read', // 파일접근권한 (public-read로 해야 업로드된 파일이 공개)
         //파일의 메타 데이타 설정
         metadata : function(req,file,cb){
-            cb(null,{fieldName: file.filename});
+            cb(null,{fieldName: file.fieldname});
         },
         key : function(req,file,cb) {
             cb(null,Date.now().toString()+'-'+file.originalname);
